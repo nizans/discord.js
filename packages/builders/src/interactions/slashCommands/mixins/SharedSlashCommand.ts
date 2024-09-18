@@ -1,9 +1,16 @@
-import type {
-	LocalizationMap,
-	Permissions,
-	RESTPostAPIChatInputApplicationCommandsJSONBody,
-} from 'discord-api-types/v10';
 import {
+	ApplicationCommandType,
+	type ApplicationIntegrationType,
+	type InteractionContextType,
+	type LocalizationMap,
+	type Permissions,
+	type RESTPostAPIChatInputApplicationCommandsJSONBody,
+} from 'discord-api-types/v10';
+import type { RestOrArray } from '../../../util/normalizeArray.js';
+import { normalizeArray } from '../../../util/normalizeArray.js';
+import {
+	contextsPredicate,
+	integrationTypesPredicate,
 	validateDMPermission,
 	validateDefaultMemberPermissions,
 	validateDefaultPermission,
@@ -27,6 +34,8 @@ export class SharedSlashCommand {
 
 	public readonly options: ToAPIApplicationCommandOptions[] = [];
 
+	public readonly contexts?: InteractionContextType[];
+
 	/**
 	 * @deprecated Use {@link SharedSlashCommand.setDefaultMemberPermissions} or {@link SharedSlashCommand.setDMPermission} instead.
 	 */
@@ -34,9 +43,36 @@ export class SharedSlashCommand {
 
 	public readonly default_member_permissions: Permissions | null | undefined = undefined;
 
+	/**
+	 * @deprecated Use {@link SharedSlashCommand.contexts} instead.
+	 */
 	public readonly dm_permission: boolean | undefined = undefined;
 
+	public readonly integration_types?: ApplicationIntegrationType[];
+
 	public readonly nsfw: boolean | undefined = undefined;
+
+	/**
+	 * Sets the contexts of this command.
+	 *
+	 * @param contexts - The contexts
+	 */
+	public setContexts(...contexts: RestOrArray<InteractionContextType>) {
+		Reflect.set(this, 'contexts', contextsPredicate.parse(normalizeArray(contexts)));
+
+		return this;
+	}
+
+	/**
+	 * Sets the integration types of this command.
+	 *
+	 * @param integrationTypes - The integration types
+	 */
+	public setIntegrationTypes(...integrationTypes: RestOrArray<ApplicationIntegrationType>) {
+		Reflect.set(this, 'integration_types', integrationTypesPredicate.parse(normalizeArray(integrationTypes)));
+
+		return this;
+	}
 
 	/**
 	 * Sets whether the command is enabled by default when the application is added to a guild.
@@ -80,6 +116,8 @@ export class SharedSlashCommand {
 	 * By default, commands are visible. This method is only for global commands.
 	 * @param enabled - Whether the command should be enabled in direct messages
 	 * @see {@link https://discord.com/developers/docs/interactions/application-commands#permissions}
+	 * @deprecated
+	 * Use {@link SharedSlashCommand.setContexts} instead.
 	 */
 	public setDMPermission(enabled: boolean | null | undefined) {
 		// Assert the value matches the conditions
@@ -117,6 +155,7 @@ export class SharedSlashCommand {
 
 		return {
 			...this,
+			type: ApplicationCommandType.ChatInput,
 			options: this.options.map((option) => option.toJSON()),
 		};
 	}
